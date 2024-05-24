@@ -1,44 +1,60 @@
 File Format
+
 The WAD file format contains information in three sections: the header, which gives basic layout information,
 the descriptors, which describe elements in the file, and the lumps, which contain the data themselves. NOTE:
 all numbers are in little-Endian format and, where applicable, are designated in bytes! Since Reptilian stores
 its variables in memory in little-Endian format as well, it is not necessary to perform any byte-order inversions
 when reading in or writing data, but this is still important information to know.
+
 File Header
+
 The header contains the file magic, descriptor count, and location (offset) of the descriptors in the file:
 The magic for a wad file is usually ASCII and always ends in the suffix "WAD" (e.g., "IWAD" or "PWAD").
 It is also important to note that the descriptor list, beginning at the position indicated by the descriptor
 offset, is always situated at the end of the WAD file.
 Descriptors
+
 The file’s descriptors contain information about elements in the WAD file – its file offset, length, and
 name:
+
 Some elements will have specific naming conventions that will differentiate them from regular content
 files. These “marker” elements will be interpreted by the daemon as directories and should be displayed
 accordingly in the filesystem (see below).
+
 Lumps
+
 Elements in the WAD format are stored as “lumps” described by the descriptors. These lumps will be
 represented in the filesystem by the daemon as individual files that can be opened, read, and closed.
 You cannot write to existing lumps, but you will be creating empty files whose lumps you will have
 to write to.
+
 Marker Elements
+
 There are two primary types of marker elements in WAD files, each of which should be interpreted as
 directories by our daemon. The type includes map markers and namespace markers.
 Map marker names are of the format "E#M#", where # represents a single decimal digit (e.g., "E1M9").
 They are followed by ten (10) map element descriptors. The elements for the next 10 descriptors should be
 placed inside of a directory with the map’s name. Map marker directories cannot have files or directories
 added to them.
+
 Namespace markers come in pairs. A namespace’s beginning is marked with a descriptor whose name has
 the suffix "_START" (e.g., "F1_START"), and its ending is marked with a descriptor whose name has the
 suffix "_END" (e.g., "F1_END"). Any descriptors for elements falling between the beginning and ending
 markers for a namespace should be placed within a directory with the namespace’s name (e.g., "F1").
 The namespace marker's name, excluding the suffixes, will never exceed two characters. These will be
 the kind of directories you will be responsible for creating.
+
 As an example, the following descriptors, in order, in the descriptor list, should result in this organization:
+
 Library
+
 Your library will contain a class to represent WAD data as described in this section.
+
 Wad Class
+
 The Wad class is used to represent WAD data and should have the following functions. The root of all paths
 in the WAD data should be "/", and each directory should be separated by '/' (e.g., "/F/F1/LOLWUT").
+
 public static Wad* loadWad(const string &path)
 Object allocator; dynamically creates a Wad object and loads the WAD file data from path into memory.
 Caller must deallocate the memory using the delete keyword.
@@ -57,6 +73,7 @@ public int getDirectory(const string &path, vector<string> *directory)
 If path represents a directory, places entries for immediately contained elements in directory. The elements
 should be placed in the directory in the same order as they are found in the WAD file. Returns the number of
 elements in the directory, or -1 if path does not represent a directory (e.g., if it represents content).
+
 Offset Length Name
 0 0 F_START
 0 0 F1_START
@@ -79,6 +96,7 @@ F
  E1M1
  THINGS  LINEDEFS  SIDEDEFS  VERTEXES  SEGS  SSECTORS  NODES  SECTORS  REJECT  BLOCKMAP LOLWUTDirectory Structure
 
+
 public void createDirectory(const string &path)
 path includes the name of the new directory to be created. If given a valid path, creates a new directory
 using namespace markers at path. The two new namespace markers will be added just before the “_END”
@@ -92,6 +110,7 @@ If given a valid path to an empty file, augments file size and generates a lump 
 of bytes from the buffer into the file’s lump data. If offset is provided, data should be written starting from that
 byte in the lump content. Returns number of bytes copied from buffer, or -1 if path does not represent content
 (e.g., if it represents a directory).
+
 Daemon Command & Parameters
 Your daemon should have name wadfs and should accept at a minimum three parameters – the single-threaded
 flag "-s", the target WAD file, and the mount directory. For example, this command should mount TINY.WAD
