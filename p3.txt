@@ -1,0 +1,146 @@
+.Sh HEADER              \" Section Header - required - don't modify
+.Nm Project 3: File System 
+
+.Sh SYNOPSIS             \" Section Header - required - don't mod
+PROJECT 3
+contains 
+.Ar libWad and wadfs. 
+libWad, a library that consists of functions that allow a user to read/write a .wad file,
+.Pp
+.Bl
+And wadfs uses FUSE API in order to give the user read/write access to the wad object.
+.Sh DESCRIPTION          \" Section Header - required - don't modify
+
+.Bl -tag -width -indent  \" Begins a tagged list
+.It libWad functions:
+ 
+.It
+.Pp
+.Ar Wad(const std::string& path) ->
+Iterates through wad file, keeping member varibales for magic,offsetDescriptor, and numOfDescriptor. Creates N-ary tree and hashmap of descrpitor elements. Uses a vector for absolute path.
+.It
+.Pp
+.Ar static Wad* loadWad(const std::string &path)->
+calls wad() on heap.
+.It
+.Pp
+.Ar std::string getMagic()->
+returns magic
+.It
+.Pp
+.Ar bool isContent(const std::string &path)->
+checks if path is file 
+.It
+.Pp
+.Ar bool isDirectory(const std::string &path)->
+checks if path is directory
+.It
+.Pp
+.Ar int getSize(const std::string &path)->
+ returns number of bytes or returns -1 if not content.
+.It
+.Pp
+.Ar int getContents(const std::string &path, char *buffer, int length, int offset = 0)->
+calls iscontent. refers to path's offset returns bytes and information into buffer acorrdingly to parameters:length and offset.
+
+.It
+.Pp
+.Ar int getDirectory(const std::string &path, std::vector<std::string> *directory)->
+call isDirectory(). Iterates through parent's children and places it into directory. return # of children or -1.
+
+.It
+.Pp
+.Ar void createDirectory(const std::string &path)->
+checks constraints on substrings of path, calls adjustDescriptorDirectory() and calls adjustdDescriptorCount() twice.
+
+.It
+.Pp
+.Ar void createFile(const std::string &path)->
+checks constraints on substrings of path, calls adjustDescriptorFiles(), and adjustDecriptorCount().
+.It
+.Pp
+.Ar int writeToFile(const std::string &path, const char *buffer, int length, int offset = 0)->
+creates buffer1 with contents from offsetDescriptor to EOF. Places buffer data at end of lump data and writes buffer1 after. updates offsetDescriptor by length .
+return bytes written, 0 file has data, -1 isContent() fails, 
+.It
+.Pp
+.Ar bool newFileConstraints(std::string path)->
+Returns false if path M,E,  _START, _END, and is root.
+.It
+.Pp
+.Ar bool newDirectoryConstraints(std::string path)->
+returns false if path has M,E.
+.It
+.Pp
+.Ar void adjustDescriptorFiles(std::string parentDirectory,std::string filename,std::string path)->
+ If parent is root, place  at the eof. If not, calls findDescriptorPosition() , creates a buffer with contents from pos returned-16 to eof.
+Writes new descriptor at respected location, writes buffers.
+.It
+.Pp
+.Ar void adjustDescriptorDirectory(std::string parentDirectory,std::string newDirectory,std::string path)->
+ If parent is root, place at eof. If not, calls findDescriptorPosition(), creates a buffer with contents from pos returned - 16 to eof.
+Writes  two new descriptors one for END/START at respected location, writes buffer.
+
+.It
+.Pp
+.Ar std::streampos findDescriptorPostion(std::string parentDirectory, std::string path,bool isWriteToFile)->
+In wad, Finds correct parentDirectory _End descriptor or filename Descriptor,if iswriteTofile is true, using path (absolute) that matches vectorpath(). 
+.It
+.Pp
+.Ar std::string removeBackSlash(std::string path) ->
+returns string without the last "/".
+.It
+.Pp
+.Ar void adjustDescriptorCount()->
+ increases descriptor count by 1 in wad file. 
+.It
+.Pp
+.Ar std::string vectorPath()->
+returns string in form of absolute path with vector contents.
+.It
+.Pp
+.Ar void addNode(FileNode* parent,unsigned int offset, unsigned int length,std::string fileName, bool isDirectory)->
+Initilaization only: uses findNode,vectorpath, and addHelperNode to recusively create n-ary tree.
+.It
+.Pp
+.Ar  FileNode* findNode(FileNode* currentNode, std::string directory)->
+returns a node that matches with string's paramater and currentNode's filename. 
+.It
+.Pp
+.Ar void addNodeHelper(FileNode* parent,unsigned int offset, unsigned int length,std::string fileName, bool isDirectory)->
+places new filenode in parent's childen vector.
+.It
+.Pp
+.Ar  void deleteTree(FileNode*& _root) ->
+recusively deletes tree.
+.It
+.Pp
+.Ar void addToHash(std::string filename) ->
+Adds filename in absolute path format. 
+
+.El
+.Pp
+FUSE uses getattr,mknod,mkdir,open,read,write,readdir with above functions respectively.
+main daemonize itself, and implements FUSE API with the given wad.
+.Pp
+.Pp
+.Pp
+
+.Sh Bugs
+unaware.
+
+.Sh REFERENCES 
+.Ar P3 discussion video 1/2 &
+.Ar links in P3 pdf
+
+.Sh SCREENCAST
+https://youtu.be/mTOnUKBnoGQ
+
+.Sh TESTING
+daemon testing was manual, using terminal commands.
+libWad via run_libtest.sh.
+
+.Sh AUTHOR
+Cristian Huerta
+UFID:82969309
+
